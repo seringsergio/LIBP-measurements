@@ -145,6 +145,7 @@ struct {
 
   uint32_t acksent;
   uint32_t datasent;
+  uint32_t beaconsent;
 
   uint32_t datarecv;
   uint32_t ackrecv;
@@ -187,6 +188,7 @@ send_ack(struct libp_conn *tc, const rimeaddr_t *to, int flags)
 
   RIMESTATS_ADD(acktx);
   stats.acksent++;
+  printf("stats %d %lu %lu %lu \n",rimeaddr_node_addr.u8[0], stats.beaconsent ,stats.acksent, stats.datasent );
 }
 /*---------------------------------------------------------------------------*/
 
@@ -850,6 +852,10 @@ send_beacon(void *ptr)
     packetbuf_copyfrom(&msg, sizeof(struct beacon_message));
     broadcast_send(&c->broadcast_conn);
     PRINTF("Sending beacon\n");
+
+    stats.beaconsent++;
+    printf("stats %d %lu %lu %lu \n",rimeaddr_node_addr.u8[0], stats.beaconsent ,stats.acksent, stats.datasent );
+
     if(c->is_sink) {
         clock_time_t period = BEACONING_PERIOD * CLOCK_SECOND;
         libp_set_beacon_period(c, period);
@@ -1156,6 +1162,7 @@ send_queued_packet(struct libp_conn *c)
       packetbuf_set_attr(PACKETBUF_ATTR_PACKET_ID, c->seqno);
 
       stats.datasent++;
+      printf("stats %d %lu %lu %lu \n",rimeaddr_node_addr.u8[0], stats.beaconsent ,stats.acksent, stats.datasent );
 
       /* Copy our rtmetric into the packet header of the outgoing
          packet. */

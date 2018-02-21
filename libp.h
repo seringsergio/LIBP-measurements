@@ -15,6 +15,7 @@
 #include "net/packetqueue.h"
 #include "sys/ctimer.h"
 #include "lib/list.h"
+#include <inttypes.h>
 
 struct libp_callbacks {
   void (* recv)(const rimeaddr_t *originator, uint8_t seqno,

@@ -15,7 +15,7 @@
 #include "node.h"
 #include "queue.h"
 #include "net/netstack.h"
-
+ #include "powertrace.h"
 
 #include <stdio.h>
 
@@ -29,7 +29,9 @@ static int is_sink = 0;
 /*---------------------------------------------------------------------------*/
 PROCESS(example_libp_process, "Test LIBP process");
 PROCESS(gateway_monitoring_process, "Gateway Monitoring Process");
-AUTOSTART_PROCESSES(&example_libp_process);
+PROCESS(energy_powertrace, "energy measurement");
+
+AUTOSTART_PROCESSES(&example_libp_process, &energy_powertrace);
 /*---------------------------------------------------------------------------*/
 static void
 recv(const rimeaddr_t *originator, uint8_t seqno, uint8_t hops)
@@ -44,6 +46,14 @@ recv(const rimeaddr_t *originator, uint8_t seqno, uint8_t hops)
 static const struct collect_callbacks callbacks = { recv };
 /*---------------------------------------------------------------------------*/
 
+PROCESS_THREAD(energy_powertrace, ev, data)
+{
+  PROCESS_BEGIN();
+
+  powertrace_start(CLOCK_SECOND * 10);
+
+  PROCESS_END();
+}
 
 PROCESS_THREAD(example_libp_process, ev, data)
 {
@@ -51,6 +61,8 @@ PROCESS_THREAD(example_libp_process, ev, data)
     static struct etimer et;
 
     PROCESS_BEGIN();
+
+
     libp_open(&lc, CHANNEL, LIBP_ROUTER, &callbacks);
 
     if(rimeaddr_node_addr.u8[0] == 1 &&
@@ -91,12 +103,13 @@ PROCESS_THREAD(example_libp_process, ev, data)
             const rimeaddr_t *parent;
 
             printf("Sending\n");
+            //printf("stats %d %d %d",  stats.beaconsent, stats.acksent ,stats.datasent );
             packetbuf_clear();
             parent = libp_parent(&lc);
             packetbuf_set_datalen(sprintf(packetbuf_dataptr(),
                                           "%s %d", "Hello", (int)parent->u8[0]) + 1);
             libp_send(&lc, 15);
-            
+
             parent = libp_parent(&lc);
             if(!rimeaddr_cmp(parent, &oldparent))
             {
